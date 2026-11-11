@@ -1,0 +1,17 @@
+start_date: "2025-01-01"   # mulai 1 tahun dulu
+
+market_tickers:
+  sp500: "^GSPC"
+  vix: "^VIX"
+  gold: "GC=F"
+  oil: "CL=F"
+  dxy: "DX-Y.NYB"
+
+fred_series:
+  yield_10y: "DGS10"
+  yield_2y: "DGS2"
+  cpi: "CPIAUCSL"
+  fed_funds: "FEDFUNDS"
+
+drive:
+  folder_path: "geomacro/raw"   # dibuat otomatis di Drive (scope drive.file)

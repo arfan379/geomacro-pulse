@@ -1,0 +1,18 @@
+# environment & secret
+.venv/
+.env
+credentials*.json
+token*.json
+client_secret*.json
+*.pem
+
+# data mentah (jembatan lewat Drive, bukan git)
+data/raw/*
+!data/raw/.gitkeep
+
+# python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+logs/

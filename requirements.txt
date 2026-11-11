@@ -1,0 +1,11 @@
+yfinance
+fredapi
+pandas
+pyarrow
+requests
+pyyaml
+python-dotenv
+google-api-python-client
+google-auth
+google-auth-oauthlib
+tenacity
