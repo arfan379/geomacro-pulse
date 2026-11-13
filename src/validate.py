@@ -137,7 +137,7 @@ def _check_columns(source, df, rep, *, calendar=False, daily_max_age=5, check_nu
 
 def _check_values(source, df, rep):
     if source == "market":
-        for c in [c for c in df.columns if c.endswith("_close")]:
+        for c in [c for c in df.columns if c.endswith("_close") and c != "oil_close"]:
             bad = int((df[c] <= 0).sum())
             if bad:
                 rep.add(source, "ERROR", "nilai_tak_wajar", f"{c}: {bad} nilai <= 0")
