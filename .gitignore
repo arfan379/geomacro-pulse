@@ -16,3 +16,7 @@ __pycache__/
 .ipynb_checkpoints/
 .DS_Store
 logs/
+
+# skrip installer sekali pakai
+apply_tahap*.sh
+setup_tahap*.sh
