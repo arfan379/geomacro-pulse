@@ -2,11 +2,12 @@
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-analisis%20selesai-brightgreen)
-![Data](https://img.shields.io/badge/data-GDELT%20%7C%20yfinance%20%7C%20FRED-orange)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
-![LightGBM](https://img.shields.io/badge/LightGBM-gradient%20boosting-9cf)
-![Last commit](https://img.shields.io/github/last-commit/arfan379/geomacro-pulse)
+![LightGBM](https://img.shields.io/badge/LightGBM-2E8B57?logo=leaflet&logoColor=white)
+![Google Colab](https://img.shields.io/badge/Google%20Colab-F9AB00?logo=googlecolab&logoColor=white)
+![Apache Parquet](https://img.shields.io/badge/Apache%20Parquet-50ABF1?logo=apache&logoColor=white)
+![Microsoft Excel](https://img.shields.io/badge/Microsoft%20Excel-217346?logo=microsoftexcel&logoColor=white)
+
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/arfan379/geomacro-pulse/blob/main/analysis/geomacro_lengkap.ipynb)
 
