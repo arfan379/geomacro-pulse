@@ -1,44 +1,83 @@
 # geomacro-pulse
 
-![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Status](https://img.shields.io/badge/status-data%20pipeline%20siap%2C%20analisis%20belum-yellow)
+![Status](https://img.shields.io/badge/status-analisis%20selesai-brightgreen)
+![Data](https://img.shields.io/badge/data-GDELT%20%7C%20yfinance%20%7C%20FRED-orange)
+![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
+![LightGBM](https://img.shields.io/badge/LightGBM-gradient%20boosting-9cf)
+![Last commit](https://img.shields.io/github/last-commit/arfan379/geomacro-pulse)
 
-Pipeline data untuk riset prediksi *market shock* dari sinyal geopolitik (GDELT) dan indikator makro-keuangan (yfinance, FRED).
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/arfan379/geomacro-pulse/blob/main/analysis/geomacro_lengkap.ipynb)
+
+Pipeline data dan analisis untuk menguji apakah berita geopolitik (GDELT) membantu memprediksi *market shock* di pasar saham AS.
+
+> **Temuan singkat:** pada data ini, GDELT **tidak** menambah kemampuan prediksi. Hasil negatif ini sah, bukan kegagalan.
+
+**Daftar isi:**
+[Tentang proyek](#tentang-proyek) ·
+[Hasil](#hasil) ·
+[Data](#data) ·
+[Fitur utama](#fitur-utama) ·
+[Tech stack](#tech-stack) ·
+[Struktur repo](#struktur-repo) ·
+[Instalasi dan menjalankan](#instalasi-dan-menjalankan) ·
+[Asumsi dan batasan](#asumsi-dan-batasan) ·
+[Kontribusi dan lisensi](#kontribusi-dan-lisensi)
+
+---
 
 ## Tentang proyek
 
-Pertanyaan yang ingin dijawab: apakah berita dan event geopolitik dunia memberi informasi tambahan untuk memprediksi guncangan pasar, dibanding model yang hanya memakai data pasar dan makro?
+Guncangan pasar saham sulit diantisipasi, dan banyak yang menduga berita geopolitik (perang, sanksi, ketegangan) memberi tanda awal. Pertanyaan proyek ini: **apakah data berita dunia menambah kemampuan memprediksi guncangan, dibandingkan model yang hanya memakai data pasar dan makro?**
 
-Menjawabnya butuh data dari tiga sumber yang bentuknya berbeda-beda: harga pasar harian, indikator makro yang sebagian bulanan, dan jutaan event berita per tahun. Repo ini mengurus bagian itu, yaitu menarik, merapikan, memeriksa, dan menyimpan data supaya analisis di Colab bisa langsung mulai dari data yang bersih dan terdokumentasi. Penggunanya saya sendiri, tapi strukturnya cukup umum untuk dipakai siapa saja yang meneliti hubungan berita dan pasar.
+*Shock* didefinisikan sebagai S&P 500 turun ≥ 3% dari penutupan hari ini pada titik terendah dalam 5 hari bursa ke depan. Ada 242 hari shock (81 episode) dari 2.229 hari bursa. Pada data model, setelah baris awal dan hari tanpa GDELT dibuang, jumlahnya sedikit lebih kecil.
 
-Analisis dan modelling belum dikerjakan. Yang sudah selesai adalah pipeline datanya.
+Repo ini berisi pipeline pengambilan data (`data_engineering/`) serta notebook analisis dan presentasi hasilnya (`analysis/`). Penggunanya analis atau peneliti data finansial yang ingin mereplikasi atau memperluas pengujian ini. Proyek ini riset pribadi.
 
 ```text
 yfinance + FRED + GDELT  →  validasi  →  Google Drive  →  Colab
       (lokal, incremental)               (jembatan)       (analisis)
 ```
 
-## Contoh keluaran
+## Hasil
 
-Belum ada visualisasi karena analisisnya belum ada. Ini cuplikan log dari satu kali jalan, supaya terlihat apa yang dilaporkan pipeline:
+Pada data ini, GDELT tidak menambah kemampuan prediksi. Regresi logistik tanpa GDELT paling baik, dan menambah GDELT tidak memperbaiki apa pun. Pada model stacking, GDELT justru menurunkan performa.
 
-```text
-validate | [fred]  tanggal_bolong: cpi: 1 celah besar: 2025-09-01 -> 2025-11-01 (61 hari)
-validate | [gdelt] tanggal_bolong: 11 kolom (...): 18 hari hilang -> ['2025-06-14 s/d 2025-07-01']
-validate | Validasi selesai: 0 ERROR, 2 WARNING. Laporan: validation_report.json
-gdrive   | Sync selesai ke 'My Drive/geomacro/raw': {'created': 4, 'updated': 0, 'skipped': 0}
-```
+| Model | PR-AUC | Brier |
+|---|---|---|
+| Tebakan acak (base rate) | 0,097 | 0,0878 |
+| Regresi logistik tanpa GDELT | **0,167** | 0,0958 |
+| Regresi logistik dengan GDELT | 0,157 | 0,0992 |
+| Stacking tanpa GDELT | 0,152 | 0,0919 |
+| Stacking dengan GDELT | 0,118 | 0,0927 |
 
-## Fitur utama
+Selisih dengan vs tanpa GDELT (block bootstrap, CI 95%):
 
-- **Incremental.** Run berikutnya hanya menarik tanggal yang belum ada. Pasar menarik ulang 7 hari terakhir, FRED 120 hari (data bulanan sering direvisi), dan hari GDELT yang gagal otomatis dicoba lagi.
-- **Validasi dua tingkat.** ERROR (file hilang, tanggal duplikat, harga ≤ 0, data basi) membuat exit code 1. WARNING (celah tanggal, banyak null) hanya dicatat ke `validation_report.json`.
-- **Sinkronisasi ke Drive tanpa duplikat.** File dicari berdasarkan nama lalu di-update, dan file yang isinya sama (cek MD5) tidak diunggah ulang. Ada retry untuk error sementara.
-- **Sync yang berhati-hati.** Upload dilewati kalau ada sumber yang gagal atau validasi menemukan ERROR, supaya data rusak tidak sampai ke Colab.
-- **Data tetap mentah.** Alignment zona waktu, join, dan penanganan celah dikerjakan di notebook supaya prosesnya terdokumentasi.
+- **Regresi logistik:** -0,010 [-0,041; +0,013], tidak beda dari nol.
+- **Stacking:** -0,034 [-0,063; -0,006], GDELT menurunkan performa.
 
-Isi data di `data/raw/` (Parquet, kolom `date`):
+**Dua catatan membaca hasil:** semua model hanya sedikit di atas tebakan acak, dan skor Brier semuanya lebih buruk dari tebakan konstan. Artinya probabilitas yang dihasilkan belum bisa dipercaya sebagai angka peluang.
+
+![Kurva precision-recall](analysis/figures/pr_curve.png)
+
+![Selisih dengan vs tanpa GDELT](analysis/figures/bootstrap_selisih.png)
+
+![Hari shock pada S&P 500](analysis/figures/shock_sp500.png)
+
+Presentasi lengkap: [`presentasi.pptx`](analysis/presentation/presentasi.pptx) (versi PDF: [`presentasi.pdf`](analysis/presentation/presentasi.pdf))
+
+## Data
+
+Semua data publik dan gratis, bukan simulasi.
+
+| Data | Sumber | Isi | Periode |
+|---|---|---|---|
+| Harga pasar | Yahoo Finance (yfinance) | S&P 500, VIX, emas, minyak, indeks dolar | 2018 – Nov 2026 |
+| Makro AS | FRED | Yield 10y dan 2y, CPI, fed funds | 2017 – Nov 2026 |
+| Berita dunia | GDELT Project (events 1.0) | Jumlah event konflik, skor Goldstein, nada berita | 2018 – Nov 2026 |
+
+Isi `data_engineering/data/raw/` (Parquet, kolom `date`):
 
 | File | Isi |
 |---|---|
@@ -49,51 +88,129 @@ Isi data di `data/raw/` (Parquet, kolom `date`):
 
 Konflik = QuadClass 3 (verbal) dan 4 (material), kekerasan = kode CAMEO 18–20, protes = kode 14. Versi `wmean` dibobot jumlah mention.
 
+## Fitur utama
+
+### Pipeline data (`data_engineering/`)
+
+- **Incremental.** Hanya menarik tanggal yang belum ada. Pasar menarik ulang 7 hari terakhir, FRED 120 hari (data bulanan sering direvisi), dan hari GDELT yang gagal otomatis dicoba lagi.
+- **Validasi dua tingkat.** ERROR (file hilang, tanggal duplikat, harga ≤ 0, data basi) membuat exit code 1. WARNING (celah tanggal, banyak null) hanya dicatat ke `validation_report.json`.
+- **Sinkronisasi ke Drive tanpa duplikat.** File dicari berdasarkan nama lalu di-update, file yang isinya sama (cek MD5) tidak diunggah ulang, dan ada retry untuk error sementara.
+- **Sync yang berhati-hati.** Upload dilewati kalau ada sumber gagal atau validasi menemukan ERROR, supaya data rusak tidak sampai ke Colab.
+- **Data tetap mentah.** Alignment zona waktu, join, dan penanganan celah dikerjakan di notebook supaya prosesnya terdokumentasi.
+
+Contoh log dari satu kali jalan:
+
+```text
+validate | [fred]  tanggal_bolong: cpi: 1 celah besar: 2025-09-01 -> 2025-11-01 (61 hari)
+validate | [gdelt] tanggal_bolong: 11 kolom (...): 18 hari hilang -> ['2025-06-14 s/d 2025-07-01']
+validate | Validasi selesai: 0 ERROR, 2 WARNING. Laporan: validation_report.json
+gdrive   | Sync selesai ke 'My Drive/geomacro/raw': {'created': 4, 'updated': 0, 'skipped': 0}
+```
+
+### Analisis (`analysis/`)
+
+- **Anti-bocor.** GDELT dipakai satu hari terlambat, data FRED hanya setelah tanggal tersedianya, dan ada uji otomatis yang menghentikan notebook kalau fitur memakai informasi masa depan.
+- **Validasi berurutan.** 6 putaran walk-forward dengan jeda 10 hari. Model yang sama dibandingkan dengan dan tanpa GDELT pada baris yang sama, tanpa tuning.
+- **Rezim pasar.** Gaussian Mixture Model, dilatih ulang di tiap putaran hanya dengan data latih.
+- **Evaluasi jujur.** PR-AUC dan Brier dibandingkan dengan tebakan acak, selisihnya dinilai dengan block bootstrap, ditambah kalibrasi, SHAP out-of-fold, dan studi kasus krisis.
+
 ## Tech stack
 
-- **Pipeline (sudah ada):** Python 3.10+, pandas, pyarrow, yfinance, fredapi, requests, tenacity, Google Drive API (OAuth), PyYAML, python-dotenv
-- **Analisis (rencana, di Colab):** scikit-learn, LightGBM, CatBoost, SHAP, Gaussian Mixture Model untuk regime detection
+- **Pipeline:** Python 3.10+, pandas, pyarrow, yfinance, fredapi, requests, tenacity, Google Drive API (OAuth), PyYAML, python-dotenv
+- **Analisis (Colab):** scikit-learn (regresi logistik, random forest, GMM), LightGBM, CatBoost, SHAP, matplotlib
+
+## Struktur repo
+
+```text
+geomacro-pulse/
+├── README.md
+├── LICENSE
+├── data_engineering/             # pengambilan, validasi, dan sinkronisasi data
+│   ├── src/                      # ingestion/, cloud/, validate.py, run_ingestion.py
+│   ├── config/settings.yaml      # ticker, seri FRED, folder Drive
+│   ├── data/raw/                 # parquet mentah (tidak di-commit)
+│   └── requirements.txt
+└── analysis/                     # analisis dan hasil
+    ├── geomacro_lengkap.ipynb    # seluruh analisis (jalankan di Colab)
+    ├── figures/                  # grafik hasil
+    └── presentation/             # presentasi
+```
+
+File rahasia (`.env`, `client_secret.json`) berada di `data_engineering/` dan tidak di-commit.
 
 ## Instalasi dan menjalankan
+
+### 1. Ambil data (lokal)
+
+Semua perintah dijalankan dari dalam `data_engineering/`. Butuh `FRED_API_KEY` di `data_engineering/.env` (gratis di [fred.stlouisfed.org](https://fred.stlouisfed.org/), menu My Account → API Keys).
 
 ```bash
 git clone https://github.com/arfan379/geomacro-pulse.git
 cd geomacro-pulse
 python3 -m venv .venv && source .venv/bin/activate
+cd data_engineering
 pip install -r requirements.txt
-cp .env.example .env
+cp .env.example .env          # lalu isi FRED_API_KEY
+
+python -m src.run_ingestion --start 2018-01-01      # tarik data + validasi
+python -m src.validate                              # validasi saja
 ```
 
-Isi `FRED_API_KEY` di `.env` (gratis di [fred.stlouisfed.org](https://fred.stlouisfed.org), menu My Account → API Keys). Lalu:
+Menarik GDELT dari 2018 memakan waktu beberapa jam (satu file per hari), tapi bersifat incremental dan bisa dilanjutkan kalau terputus.
 
-```bash
-python -m src.run_ingestion                     # tarik data + validasi
-python -m src.run_ingestion --start 2021-01-01  # rentang lebih panjang
-python -m src.validate                          # validasi saja
-```
+### 2. Sinkronisasi ke Google Drive (opsional, dibutuhkan untuk analisis di Colab)
 
-Run pertama untuk GDELT lambat: sekitar 1 jam per 677 hari data, karena satu file per hari. Setelah itu cepat.
-
-Untuk upload ke Google Drive (opsional, dibutuhkan kalau datanya mau dibaca di Colab):
-
-1. Di Google Cloud Console, aktifkan Drive API dan buat OAuth client ID bertipe *Desktop app*. Simpan JSON-nya sebagai `client_secret.json` di root proyek.
+1. Di Google Cloud Console, aktifkan Drive API dan buat OAuth client ID bertipe *Desktop app*. Simpan JSON-nya sebagai `data_engineering/client_secret.json`.
 2. Login sekali: `python -m src.cloud.gdrive_sync --auth`
-3. Upload: `python -m src.run_ingestion --sync` atau `python -m src.cloud.gdrive_sync`
+3. Upload: `python -m src.run_ingestion --sync`
 
-Folder `geomacro/raw` dibuat otomatis di My Drive, dan di Colab dibaca dari `/content/drive/MyDrive/geomacro/raw/`. Jangan biarkan consent screen berstatus *Testing*, karena refresh token kedaluwarsa dalam 7 hari.
+Folder `geomacro/raw` dibuat otomatis di My Drive. Jangan biarkan consent screen berstatus *Testing*, karena refresh token kedaluwarsa dalam 7 hari.
 
-## Asumsi dan trade-off
+### 3. Analisis (Colab)
 
-- **GDELT 1.0 (file harian), bukan 2.0 (15 menit).** Jauh lebih ringan dan sederhana, tapi lebih kasar, dan beberapa hari memang tidak tersedia di server (14 Juni sampai 1 Juli 2025). Agregasinya juga global, tidak per negara atau topik, jadi detail geografis hilang.
-- **Tanggal GDELT adalah tanggal file (UTC), bukan tanggal kejadian.** Ini mencegah kebocoran informasi dari masa depan. Konsekuensinya, satu file baru lengkap setelah hari UTC berakhir, sehingga di analisis data hari *t* sebaiknya dipakai untuk memprediksi *t+1*.
-- **FRED mencatat tanggal observasi, bukan tanggal rilis.** CPI bulan *M* baru terbit sekitar pertengahan bulan *M+1*, jadi harus di-lag. CPI Oktober 2025 juga tidak tersedia.
-- **OAuth user credentials, bukan service account.** Service account sering kena `storageQuotaExceeded` di My Drive pribadi. Scope `drive.file` dipilih supaya skrip hanya bisa menyentuh file buatannya sendiri, dengan konsekuensi folder tujuan harus dibuat oleh skrip, bukan manual.
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/arfan379/geomacro-pulse/blob/main/analysis/geomacro_lengkap.ipynb)
+
+Klik badge di atas (atau unggah `analysis/geomacro_lengkap.ipynb` ke Colab), pastikan data ada di `MyDrive/geomacro/raw/`, lalu **Runtime → Run all**. Grafik tersimpan otomatis di `MyDrive/geomacro/figures/`.
+
+## Asumsi dan batasan
+
+<details>
+<summary><b>Data dan sinyal</b></summary>
+
+- **GDELT dirangkum secara global**, tidak per negara atau topik. Detail geografis hilang, dan itu bisa menjadi alasan sinyalnya lemah.
+- **Patahan level GDELT.** Volume event punya patahan sekitar Maret 2023 (naik kira-kira dua kali lipat) dan tren turun panjang sejak 2018. Fitur berbasis jumlah (`z_events`, `z_violent`) bisa menyesatkan di sekitar periode itu. Dampaknya pada hasil belum diuji.
+- **Data hilang.** 24 hari kalender GDELT tidak terpakai (20 hari file tidak ada di server, 4 hari file parsial), dan CPI Oktober 2025 tidak tersedia.
+- **Kualitas sumber.** Yahoo Finance diakses lewat pustaka tidak resmi, jadi ada validasi data basi. GDELT dikodekan mesin dari media dunia.
+
+</details>
+
+<details>
+<summary><b>Evaluasi</b></summary>
+
+- **COVID 2020 tidak masuk periode uji**, hanya data latih. Krisis terbesar di data tidak pernah diuji secara out-of-sample.
+- **Episode krisis sedikit dan bergerombol**, sehingga interval kepercayaan lebar. CI hanya menangkap variasi sampel uji, bukan variasi pelatihan.
+- **Perbandingan berganda.** Ada 4 perbandingan (2 model × 2 target). Satu interval yang sedikit di atas atau di bawah nol bukan bukti kuat.
+- Uji ketahanan dengan ambang shock 4% ada di notebook.
+
+</details>
+
+<details>
+<summary><b>Waktu dan kebocoran informasi</b></summary>
+
+- **Tanggal GDELT adalah tanggal file (UTC)**, bukan tanggal kejadian, dan **data FRED dipakai setelah tanggal tersedianya**. Keduanya untuk mencegah kebocoran informasi dari masa depan.
+
+</details>
+
+<details>
+<summary><b>Infrastruktur</b></summary>
+
+- **OAuth user credentials dengan scope `drive.file`, bukan service account**, karena service account sering kena `storageQuotaExceeded` di My Drive pribadi. Konsekuensinya, folder tujuan dibuat oleh skrip, bukan manual.
 - **Drive sebagai jembatan, bukan database.** Sederhana dan gratis, tapi tidak ada kontrol konkurensi: yang menulis terakhir menang.
-- **yfinance adalah scraper tidak resmi.** Bisa berubah atau terlambat sewaktu-waktu, makanya ada validasi data basi.
-- **Data yang ditarik secara default baru sekitar 1 tahun.** Itu tipis untuk model dengan target kejadian langka. Rentang lebih panjang perlu ditarik sebelum modelling serius.
+
+</details>
 
 ## Kontribusi dan lisensi
 
-Ini proyek riset pribadi yang masih berjalan. Issue dan saran terbuka lewat tab Issues, dan pull request kecil (perbaikan bug, sumber data tambahan) dipersilakan. Untuk perubahan besar, buka issue dulu supaya arahnya cocok.
+Ini proyek riset pribadi yang masih bisa dikembangkan. Issue dan saran terbuka lewat tab [Issues](https://github.com/arfan379/geomacro-pulse/issues), dan pull request kecil (perbaikan bug, sumber data tambahan, fitur GDELT per negara atau topik) dipersilakan. Untuk perubahan besar, buka issue dulu supaya arahnya cocok.
 
-Dirilis dengan lisensi [MIT](LICENSE). Proyek ini untuk keperluan riset dan belajar, bukan nasihat investasi.
+Dirilis dengan lisensi [MIT](LICENSE). Untuk riset dan belajar, bukan nasihat investasi.
