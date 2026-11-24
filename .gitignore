@@ -7,8 +7,8 @@ client_secret*.json
 *.pem
 
 # data mentah (jembatan lewat Drive, bukan git)
-data/raw/*
-!data/raw/.gitkeep
+data_engineering/data/raw/*
+!data_engineering/data/raw/.gitkeep
 
 # python
 __pycache__/
