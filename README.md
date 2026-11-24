@@ -3,9 +3,7 @@
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue?logo=python&logoColor=white)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-F7931E?logo=scikitlearn&logoColor=white)
-![LightGBM](https://img.shields.io/badge/LightGBM-2E8B57?logo=leaflet&logoColor=white)
 ![Google Colab](https://img.shields.io/badge/Google%20Colab-F9AB00?logo=googlecolab&logoColor=white)
-![Apache Parquet](https://img.shields.io/badge/Apache%20Parquet-50ABF1?logo=apache&logoColor=white)
 ![Microsoft Excel](https://img.shields.io/badge/Microsoft%20Excel-217346?logo=microsoftexcel&logoColor=white)
 
 
